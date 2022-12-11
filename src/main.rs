@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, binary_heap::Iter};
 
 fn main(){
     print!("Hello Lex");
@@ -29,6 +29,33 @@ pub struct MetaToken {
     line_no: i32,
 }
 
+pub trait PeekableIterator : std::iter::Iterator {
+    fn peek(&mut self) -> Option<&Self::Item>;
+}
+
+impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
+    fn peek(&mut self) -> Option<&Self::Item> {
+        std::iter::Peekable::peek(self)
+    }
+}
+
+fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) where{
+    it.next();
+    let ch = it.peek();
+    if let Some('&') = ch   {
+        result.push(MetaToken { 
+            token: Token::And("&&".to_string()),
+            line_no,
+        });
+        it.next();
+    } else  {
+        result.push(MetaToken {
+            token: Token::Id("&".to_string()),
+            line_no,
+        });
+    };
+}
+
 
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
     let mut result: Vec<MetaToken> = Vec::new();
@@ -43,7 +70,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
 
     let mut it = input.chars().peekable();
 
-    let mut _lineno = 1;
+    let mut line_no = 1;
 
     while let Some(&c) = it.peek()  {
         match c {
@@ -51,24 +78,11 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 it.next();
             },
             '\n'  =>  {
-                _lineno += 1;
+                line_no += 1;
                 it.next();
             },
             '&' =>  {
-                it.next();
-                let ch = it.peek();
-                if let Some('&') = ch   {
-                    result.push(MetaToken { 
-                        token: Token::And("&&".to_string()),
-                        line_no: _lineno,
-                    });
-                    it.next();
-                } else  {
-                    result.push(MetaToken {
-                        token: Token::Id("&".to_string()),
-                        line_no: _lineno,
-                    });
-                };
+                lex_special_sign(&mut it, &mut result, line_no);
             },
             '|' =>  {
                 it.next();
@@ -76,13 +90,13 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('|') = ch   {
                     result.push(MetaToken {
                         token: Token::Or("||".to_string()),
-                        line_no: _lineno,
+                        line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
                         token: Token::Id("|".to_string()),
-                        line_no: _lineno
+                        line_no
                     });
                 };
             },
@@ -92,13 +106,13 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('=') = ch   {
                     result.push(MetaToken {
                         token: Token::Eql("==".to_string()),
-                        line_no: _lineno,
+                        line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken { 
                         token:Token::Id("=".to_string()),
-                        line_no: _lineno,
+                        line_no,
                     });
                 };
             },
@@ -108,13 +122,13 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('=') = ch   {
                     result.push(MetaToken { 
                         token: Token::Ne("!=".to_string()),
-                        line_no: _lineno
+                        line_no
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
                         token: Token::Id("!".to_string()),
-                        line_no: _lineno,
+                        line_no,
                     });
                 };
             },
@@ -124,14 +138,14 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('=') = ch   {
                     result.push(MetaToken {
                         token: Token::Le("<=".to_string()),
-                        line_no: _lineno,
+                        line_no,
 
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
                         token: Token::Lt("<".to_string()),
-                        line_no: _lineno,
+                        line_no,
                     });
                 };
             },
@@ -141,13 +155,13 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('=') = ch   {
                     result.push(MetaToken {
                         token: Token::Ge(">=".to_string()),
-                        line_no: _lineno,
+                        line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
                         token: Token::Gt(">".to_string()),
-                        line_no: _lineno
+                        line_no
                     });
                 }
             }
@@ -187,7 +201,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 }
                 result.push(MetaToken {
                     token: Token::Num(n),
-                    line_no: _lineno,
+                    line_no,
                 });
             },
             'A'..='Z' | 'a'..='z' => {
@@ -209,12 +223,12 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 match words.get(&s)  {
                     Some(t) => result.push(MetaToken {
                         token: Token::clone(t),
-                        line_no: _lineno,
+                        line_no,
                     }),
                     None => {
                         result.push(MetaToken {
                             token:Token::Id(s.clone()),
-                            line_no: _lineno
+                            line_no
                         });
                         words.insert(s.clone(), Token::Id(s.clone()));
                     },
@@ -223,7 +237,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
             _ => {
                 result.push(MetaToken { 
                     token: Token::Id(c.to_string()),
-                    line_no: _lineno,
+                    line_no,
                 });
                 it.next();
             },
