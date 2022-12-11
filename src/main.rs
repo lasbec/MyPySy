@@ -31,7 +31,7 @@ pub struct MetaToken {
 
 
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
-    let mut result:Vec<MetaToken> = Vec::new();
+    let mut result: Vec<MetaToken> = Vec::new();
 
     let mut words = HashMap::from([
         ("true".to_string(),  Token::True("true".to_string())),
@@ -246,7 +246,7 @@ fn correct_amount_of_tokens()   {
 
 #[test]
 fn correct_token_types()    {
-    let input = String::from("1 _ while != && =ok 3.4 1.0=_ true false if else true1");
+    let input = String::from("1 _ while != && =ok 3.4 \n1.0=_ true false if else true1");
     let result = lex(&input);
     match result    {
         Ok(r) =>    {
@@ -285,35 +285,35 @@ fn correct_token_types()    {
                 },
                 MetaToken {
                     token: Token::Num(1.0),
-                    line_no: 1,
+                    line_no: 2,
                 },
                 MetaToken {
                     token: Token::Id("=".to_string()),
-                    line_no: 1,
+                    line_no: 2,
                 },
                 MetaToken {
                     token: Token::Id("_".to_string()),
-                    line_no: 1,
+                    line_no: 2,
                 },
                 MetaToken {
                     token: Token::True("true".to_string()),
-                    line_no: 1,
+                    line_no: 2,
                 },
                 MetaToken {
                     token: Token::False("false".to_string()),
-                    line_no: 1,
+                    line_no: 2,
                 },
                 MetaToken {
                     token: Token::If("if".to_string()),
-                    line_no: 1,
+                    line_no: 2,
                 },
                 MetaToken {
                     token: Token::Else("else".to_string()),
-                    line_no: 1,
+                    line_no: 2,
                 },
                 MetaToken {
                     token: Token::Id("true1".to_string()),
-                    line_no: 1,
+                    line_no: 2,
                 },
             ];
             assert_eq!(expected, r);
