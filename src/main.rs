@@ -40,6 +40,50 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
     }
 }
 
+fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String) -> Option<Token> {
+    let c_opt = it.peek();
+    match c_opt {
+        Some(c) => {
+            let childTree = prefix_tree.get_child(c);
+            match childTree {
+                None => {
+                    match prefix_tree {
+                        PrefixTree::Root(_) => None,
+                        PrefixTree::Leaf(token) => {
+                            match it.next() {
+                                None => panic!("ABC 0"),
+                                Some(_) => {
+                                    Some(token.clone())
+                                }
+                            }
+                            
+                        },
+                        PrefixTree::Node(token, _) => {
+                            match it.next() {
+                                None => panic!("ABC 1"),
+                                Some(_) => {
+                                    Some(token.clone())
+                                }
+                            }
+                        }
+                    }
+                },
+                Some(child) => {
+                    match it.next() {
+                        None => panic!("ABC 2"),
+                        Some(c) => {
+                            content.push(c);
+                            lex_keyword(child, it, content)
+                        }
+                    }
+                    
+                }
+            }
+        },
+        None => None
+    }
+}
+
 fn lex_special_sign(first_char:&char,first_token:Token, second_char:&char, second_token:Token, it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
     it.next();
     let ch = it.peek();
@@ -73,9 +117,79 @@ fn lex_special_sign(first_char:&char,first_token:Token, second_char:&char, secon
     }
 }
 
+enum PrefixTree {
+    Root(HashMap::<char, PrefixTree>),
+    Leaf(Token),
+    Node(Token, HashMap::<char, PrefixTree>)
+}
 
-pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
+impl PrefixTree {
+    fn new() -> PrefixTree {
+        return PrefixTree::Root(HashMap::new());
+    }
+
+    fn add_leaf(&mut self, c:char ,token:Token) -> &mut PrefixTree {
+        let leaf = PrefixTree::Leaf(token.clone());
+        match self {
+            PrefixTree::Root(map) => {
+                map.insert(c, leaf);
+            },
+            PrefixTree::Leaf(token) => {
+                let mut map = HashMap::new();
+                map.insert(c, leaf);
+                *self = PrefixTree::Node(token.clone(), map);
+            },
+            PrefixTree::Node(token, map) => {
+                map.insert(c, leaf);
+            }
+        }
+        let result =  self.get_mut_child(&c);
+        match result {
+            Some(newChild) => newChild,
+            None => panic!("ABc"),
+        }
+
+    }
+    fn get_child(&self,c:&char) -> Option<&PrefixTree> {
+        match self {
+            PrefixTree::Root(map) => {
+                map.get(c)
+            },
+            PrefixTree::Node(_, map) => {
+                map.get(c)
+            }
+            PrefixTree::Leaf(_) => {
+                None
+            },
+        }
+    }
+
+    fn get_mut_child(&mut self,c:&char) -> Option<&mut PrefixTree> {
+        match self {
+            PrefixTree::Root(map) => {
+                map.get_mut(c)
+            },
+            PrefixTree::Node(_, map) => {
+                map.get_mut(c)
+            }
+            PrefixTree::Leaf(_) => {
+                None
+            },
+        }
+    }
+}
+
+
+
+pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     let mut result: Vec<MetaToken> = Vec::new();
+    let mut prefixMap = PrefixTree::new();
+    prefixMap.add_leaf('&',Token::Id ).add_leaf('&',Token::And);
+    prefixMap.add_leaf('|',Token::Id ).add_leaf('|',Token::Or);
+    prefixMap.add_leaf('=',Token::Id ).add_leaf('=',Token::Eql);
+    prefixMap.add_leaf('!',Token::Id).add_leaf('=',Token::Ne);
+    prefixMap.add_leaf('<',Token::Lt).add_leaf('=',Token::Le);
+    prefixMap.add_leaf('>',Token::Gt).add_leaf('=',Token::Ge);
 
     let mut words = HashMap::from([
         ("true".to_string(),  Token::True),
@@ -90,6 +204,18 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
     let mut line_no = 1;
 
     while let Some(&c) = it.peek()  {
+        /*let mut content = String::new();
+        let token = lex_keyword(&prefixMap, &mut it, &mut content);
+        match token {
+            None => {},
+            Some(t) => {
+                result.push(MetaToken{
+                    content,
+                    token: t,
+                    line_no
+                });
+            }
+        }*/
         match c {
             ' ' | '\t' => {
                 it.next();
@@ -99,7 +225,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 it.next();
             },
             '&' => lex_special_sign(&'&',Token::Id ,&'&',Token::And,&mut it, &mut result, line_no),
-            '|' => lex_special_sign(&'=',Token::Id ,&'|',Token::Or,&mut it, &mut result, line_no),
+            '|' => lex_special_sign(&'|',Token::Id ,&'|',Token::Or,&mut it, &mut result, line_no),
             '=' => lex_special_sign(&'=',Token::Id ,&'=',Token::Eql,&mut it, &mut result, line_no),
             '!' => lex_special_sign(&'!',Token::Id,&'=',Token::Ne,&mut it, &mut result, line_no),
             '<' => lex_special_sign(&'<',Token::Lt,&'=',Token::Le,&mut it, &mut result, line_no),
@@ -197,6 +323,23 @@ fn correct_amount_of_tokens()   {
     let result = lex(&input);
     match result    {
         Ok(r) => assert_eq!(10, r.len()),
+        Err(_) => println!("Error getting the return value."),
+    }
+}
+#[test]
+fn map_token_types() {
+    let input = String::from("!= ");
+    let result = lex(&input);
+    match result {
+        Ok(r) => {
+            let expected = vec![
+                MetaToken {
+                    content: "!=".to_string(),
+                    token: Token::Ne,
+                    line_no: 1
+            }];
+            assert_eq!(expected, r);
+        },
         Err(_) => println!("Error getting the return value."),
     }
 }
