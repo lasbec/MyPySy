@@ -40,26 +40,7 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
     }
 }
 
-fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
-    it.next();
-    let ch = it.peek();
-    if let Some('&') = ch   {
-        result.push(MetaToken { 
-            content: "&&".to_string(),
-            token: Token::And,
-            line_no,
-        });
-        it.next();
-    } else  {
-        result.push(MetaToken {
-            content: "&".to_string(),
-            token: Token::Id,
-            line_no,
-        });
-    };
-}
-
-fn lex_special_sign_lt(first_char:&char,first_token:Token, second_char:&char, second_token:Token, it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
+fn lex_special_sign(first_char:&char,first_token:Token, second_char:&char, second_token:Token, it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
     it.next();
     let ch = it.peek();
     let mut content = first_char.to_string();
@@ -117,82 +98,12 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 line_no += 1;
                 it.next();
             },
-            '&' =>  {
-                lex_special_sign(&mut it, &mut result, line_no);
-            },
-            '|' =>  {
-                it.next();
-                let ch = it.peek();
-                if let Some('|') = ch   {
-                    result.push(MetaToken {
-                        content: "||".to_string(),
-                        token: Token::Or,
-                        line_no,
-                    });
-                    it.next();
-                } else  {
-                    result.push(MetaToken {
-                        content: "|".to_string(),
-                        token: Token::Id,
-                        line_no
-                    });
-                };
-            },
-            '=' =>  {
-                it.next();
-                let ch = it.peek();
-                if let Some('=') = ch   {
-                    result.push(MetaToken {
-                        content: "==".to_string(),
-                        token: Token::Eql,
-                        line_no,
-                    });
-                    it.next();
-                } else  {
-                    result.push(MetaToken { 
-                        content: "=".to_string(),
-                        token:Token::Id,
-                        line_no,
-                    });
-                };
-            },
-            '!' =>  {
-                it.next();
-                let ch = it.peek();
-                if let Some('=') = ch   {
-                    result.push(MetaToken { 
-                        content: "!=".to_string(),
-                        token: Token::Ne,
-                        line_no
-                    });
-                    it.next();
-                } else  {
-                    result.push(MetaToken {
-                        content: "!".to_string(),
-                        token: Token::Id,
-                        line_no,
-                    });
-                };
-            },
-            '<' =>  lex_special_sign_lt(&'<',Token::Lt,&'=',Token::Le,&mut it, &mut result, line_no),
-            '>' =>  {
-                it.next();
-                let ch = it.peek();
-                if let Some('=') = ch   {
-                    result.push(MetaToken {
-                        content: ">=".to_string(),
-                        token: Token::Ge,
-                        line_no,
-                    });
-                    it.next();
-                } else  {
-                    result.push(MetaToken {
-                        content: ">".to_string(),
-                        token: Token::Gt,
-                        line_no
-                    });
-                }
-            }
+            '&' => lex_special_sign(&'&',Token::Id ,&'&',Token::And,&mut it, &mut result, line_no),
+            '|' => lex_special_sign(&'=',Token::Id ,&'|',Token::Or,&mut it, &mut result, line_no),
+            '=' => lex_special_sign(&'=',Token::Id ,&'=',Token::Eql,&mut it, &mut result, line_no),
+            '!' => lex_special_sign(&'!',Token::Id,&'=',Token::Ne,&mut it, &mut result, line_no),
+            '<' => lex_special_sign(&'<',Token::Lt,&'=',Token::Le,&mut it, &mut result, line_no),
+            '>' => lex_special_sign(&'>',Token::Gt,&'=',Token::Ge,&mut it, &mut result, line_no),
             '0'..='9' =>    {
                 let mut n = c.to_string().parse::<f64>().expect("Character not a digit.");
 
