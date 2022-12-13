@@ -39,7 +39,7 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
     }
 }
 
-fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) where{
+fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
     it.next();
     let ch = it.peek();
     if let Some('&') = ch   {
@@ -51,6 +51,24 @@ fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Ve
     } else  {
         result.push(MetaToken {
             token: Token::Id("&".to_string()),
+            line_no,
+        });
+    };
+}
+
+fn lex_special_sign_lt(it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
+    it.next();
+    let ch = it.peek();
+    if let Some('=') = ch   {
+        result.push(MetaToken {
+            token: Token::Le("<=".to_string()),
+            line_no,
+
+        });
+        it.next();
+    } else  {
+        result.push(MetaToken {
+            token: Token::Lt("<".to_string()),
             line_no,
         });
     };
@@ -132,23 +150,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                     });
                 };
             },
-            '<' =>  {
-                it.next();
-                let ch = it.peek();
-                if let Some('=') = ch   {
-                    result.push(MetaToken {
-                        token: Token::Le("<=".to_string()),
-                        line_no,
-
-                    });
-                    it.next();
-                } else  {
-                    result.push(MetaToken {
-                        token: Token::Lt("<".to_string()),
-                        line_no,
-                    });
-                };
-            },
+            '<' =>  lex_special_sign_lt(&mut it, &mut result, line_no),
             '>' =>  {
                 it.next();
                 let ch = it.peek();
