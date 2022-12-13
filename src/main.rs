@@ -25,6 +25,7 @@ pub enum Token    {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct MetaToken {
+    content: String,
     token: Token,
     line_no: i32,
 }
@@ -44,25 +45,30 @@ fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Ve
     let ch = it.peek();
     if let Some('&') = ch   {
         result.push(MetaToken { 
+            content: "&&".to_string(),
             token: Token::And("&&".to_string()),
             line_no,
         });
         it.next();
     } else  {
         result.push(MetaToken {
+            content: "&".to_string(),
             token: Token::Id("&".to_string()),
             line_no,
         });
     };
 }
 
-fn lex_special_sign_lt(first_token:Token, second_char:&char, second_token:Token, it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
+fn lex_special_sign_lt(first_char:&char,first_token:Token, second_char:&char, second_token:Token, it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
     it.next();
     let ch = it.peek();
+    let mut content = first_char.to_string();
     match ch {
         Some(n) => {
             if n == second_char{
+                content.push(second_char.clone());
                 result.push(MetaToken {
+                    content,
                     token: second_token,
                     line_no,
         
@@ -70,6 +76,7 @@ fn lex_special_sign_lt(first_token:Token, second_char:&char, second_token:Token,
                 it.next();
             } else {
                 result.push(MetaToken {
+                content,
                 token: first_token,
                 line_no,
             });
@@ -77,6 +84,7 @@ fn lex_special_sign_lt(first_token:Token, second_char:&char, second_token:Token,
         },
         None => {
             result.push(MetaToken {
+                content,
                 token: first_token,
                 line_no,
             });
@@ -117,12 +125,14 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 let ch = it.peek();
                 if let Some('|') = ch   {
                     result.push(MetaToken {
+                        content: "||".to_string(),
                         token: Token::Or("||".to_string()),
                         line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
+                        content: "|".to_string(),
                         token: Token::Id("|".to_string()),
                         line_no
                     });
@@ -133,12 +143,14 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 let ch = it.peek();
                 if let Some('=') = ch   {
                     result.push(MetaToken {
+                        content: "==".to_string(),
                         token: Token::Eql("==".to_string()),
                         line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken { 
+                        content: "=".to_string(),
                         token:Token::Id("=".to_string()),
                         line_no,
                     });
@@ -149,29 +161,33 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 let ch = it.peek();
                 if let Some('=') = ch   {
                     result.push(MetaToken { 
+                        content: "!=".to_string(),
                         token: Token::Ne("!=".to_string()),
                         line_no
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
+                        content: "!".to_string(),
                         token: Token::Id("!".to_string()),
                         line_no,
                     });
                 };
             },
-            '<' =>  lex_special_sign_lt(Token::Lt("<".to_string()),&'=',Token::Le("<=".to_string()),&mut it, &mut result, line_no),
+            '<' =>  lex_special_sign_lt(&'<',Token::Lt("<".to_string()),&'=',Token::Le("<=".to_string()),&mut it, &mut result, line_no),
             '>' =>  {
                 it.next();
                 let ch = it.peek();
                 if let Some('=') = ch   {
                     result.push(MetaToken {
+                        content: ">=".to_string(),
                         token: Token::Ge(">=".to_string()),
                         line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
+                        content: ">".to_string(),
                         token: Token::Gt(">".to_string()),
                         line_no
                     });
@@ -212,6 +228,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                     }
                 }
                 result.push(MetaToken {
+                    content: n.to_string(),
                     token: Token::Num(n),
                     line_no,
                 });
@@ -234,11 +251,13 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 println!("{}", s);
                 match words.get(&s)  {
                     Some(t) => result.push(MetaToken {
+                        content: s.clone(),
                         token: Token::clone(t),
                         line_no,
                     }),
                     None => {
                         result.push(MetaToken {
+                            content: s.clone(),
                             token:Token::Id(s.clone()),
                             line_no
                         });
@@ -248,6 +267,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
             },
             _ => {
                 result.push(MetaToken { 
+                    content: c.to_string(),
                     token: Token::Id(c.to_string()),
                     line_no,
                 });
@@ -278,66 +298,82 @@ fn correct_token_types()    {
         Ok(r) =>    {
             let expected = vec![
                 MetaToken {
+                    content: "1".to_string(),
                     token: Token::Num(1.0),
                     line_no: 1
                 },
                 MetaToken {
+                    content: "_".to_string(),
                     token: Token::Id("_".to_string()),
                     line_no: 1
                 },
                 MetaToken {
+                    content: "while".to_string(),
                     token: Token::While("while".to_string()),
                     line_no: 1
                 },
                 MetaToken {
+                    content: "!=".to_string(),
                     token: Token::Ne("!=".to_string()),
                     line_no: 1
                 },
                 MetaToken {
+                    content: "&&".to_string(),
                     token: Token::And("&&".to_string()),
                     line_no: 1
                 },
                 MetaToken {
+                    content: "=".to_string(),
                     token: Token::Id("=".to_string()),
                     line_no: 1,
                 },
                 MetaToken {
+                    content: "ok".to_string(),
                     token: Token::Id("ok".to_string()),
                     line_no: 1,
                 },
                 MetaToken {
+                    content: "3.4".to_string(),
                     token: Token::Num(3.4),
                     line_no: 1,
                 },
                 MetaToken {
+                    content: "1".to_string(),
                     token: Token::Num(1.0),
                     line_no: 2,
                 },
                 MetaToken {
+                    content: "=".to_string(),
                     token: Token::Id("=".to_string()),
                     line_no: 2,
                 },
                 MetaToken {
+                    content: "_".to_string(),
                     token: Token::Id("_".to_string()),
                     line_no: 2,
                 },
                 MetaToken {
+                    content: "true".to_string(),
                     token: Token::True("true".to_string()),
                     line_no: 2,
                 },
                 MetaToken {
+                    content: "false".to_string(),
                     token: Token::False("false".to_string()),
                     line_no: 2,
                 },
                 MetaToken {
+                    content: "if".to_string(),
                     token: Token::If("if".to_string()),
                     line_no: 2,
                 },
                 MetaToken {
+                    content: "else".to_string(),
                     token: Token::Else("else".to_string()),
                     line_no: 2,
                 },
                 MetaToken {
+                    content: "true1".to_string(),
                     token: Token::Id("true1".to_string()),
                     line_no: 2,
                 },
