@@ -59,16 +59,24 @@ fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Ve
 fn lex_special_sign_lt(it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
     it.next();
     let ch = it.peek();
+    let secondChar = '=';
     match ch {
-        Some('=') => {
-            result.push(MetaToken {
-                token: Token::Le("<=".to_string()),
+        Some(n) => {
+            if n == &secondChar{
+                result.push(MetaToken {
+                    token: Token::Le("<=".to_string()),
+                    line_no,
+        
+                });
+                it.next();
+            } else {
+                result.push(MetaToken {
+                token: Token::Lt("<".to_string()),
                 line_no,
-    
             });
-            it.next();
+            }
         },
-        _ => {
+        None => {
             result.push(MetaToken {
                 token: Token::Lt("<".to_string()),
                 line_no,
