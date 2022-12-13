@@ -7,20 +7,20 @@ fn main(){
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token    {
     Num(f64),
-    Id(String),
-    True(String),
-    False(String),
-    If(String),
-    Else(String),
-    While(String),
-    And(String),
-    Or(String),
-    Eql(String),
-    Ne(String),
-    Le(String),
-    Ge(String),
-    Lt(String),
-    Gt(String),
+    Id,
+    True,
+    False,
+    If,
+    Else,
+    While,
+    And,
+    Or,
+    Eql,
+    Ne,
+    Le,
+    Ge,
+    Lt,
+    Gt,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -46,14 +46,14 @@ fn lex_special_sign(it: &mut impl PeekableIterator<Item = char>, result: &mut Ve
     if let Some('&') = ch   {
         result.push(MetaToken { 
             content: "&&".to_string(),
-            token: Token::And("&&".to_string()),
+            token: Token::And,
             line_no,
         });
         it.next();
     } else  {
         result.push(MetaToken {
             content: "&".to_string(),
-            token: Token::Id("&".to_string()),
+            token: Token::Id,
             line_no,
         });
     };
@@ -97,11 +97,11 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
     let mut result: Vec<MetaToken> = Vec::new();
 
     let mut words = HashMap::from([
-        ("true".to_string(),  Token::True("true".to_string())),
-        ("false".to_string(), Token::False("false".to_string())),
-        ("if".to_string(),    Token::If("if".to_string())),
-        ("else".to_string(),  Token::Else("else".to_string())),
-        ("while".to_string(), Token::While("while".to_string())),
+        ("true".to_string(),  Token::True),
+        ("false".to_string(), Token::False),
+        ("if".to_string(),    Token::If),
+        ("else".to_string(),  Token::Else),
+        ("while".to_string(), Token::While),
     ]);
 
     let mut it = input.chars().peekable();
@@ -126,14 +126,14 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('|') = ch   {
                     result.push(MetaToken {
                         content: "||".to_string(),
-                        token: Token::Or("||".to_string()),
+                        token: Token::Or,
                         line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
                         content: "|".to_string(),
-                        token: Token::Id("|".to_string()),
+                        token: Token::Id,
                         line_no
                     });
                 };
@@ -144,14 +144,14 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('=') = ch   {
                     result.push(MetaToken {
                         content: "==".to_string(),
-                        token: Token::Eql("==".to_string()),
+                        token: Token::Eql,
                         line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken { 
                         content: "=".to_string(),
-                        token:Token::Id("=".to_string()),
+                        token:Token::Id,
                         line_no,
                     });
                 };
@@ -162,33 +162,33 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                 if let Some('=') = ch   {
                     result.push(MetaToken { 
                         content: "!=".to_string(),
-                        token: Token::Ne("!=".to_string()),
+                        token: Token::Ne,
                         line_no
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
                         content: "!".to_string(),
-                        token: Token::Id("!".to_string()),
+                        token: Token::Id,
                         line_no,
                     });
                 };
             },
-            '<' =>  lex_special_sign_lt(&'<',Token::Lt("<".to_string()),&'=',Token::Le("<=".to_string()),&mut it, &mut result, line_no),
+            '<' =>  lex_special_sign_lt(&'<',Token::Lt,&'=',Token::Le,&mut it, &mut result, line_no),
             '>' =>  {
                 it.next();
                 let ch = it.peek();
                 if let Some('=') = ch   {
                     result.push(MetaToken {
                         content: ">=".to_string(),
-                        token: Token::Ge(">=".to_string()),
+                        token: Token::Ge,
                         line_no,
                     });
                     it.next();
                 } else  {
                     result.push(MetaToken {
                         content: ">".to_string(),
-                        token: Token::Gt(">".to_string()),
+                        token: Token::Gt,
                         line_no
                     });
                 }
@@ -258,17 +258,17 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String>    {
                     None => {
                         result.push(MetaToken {
                             content: s.clone(),
-                            token:Token::Id(s.clone()),
+                            token:Token::Id,
                             line_no
                         });
-                        words.insert(s.clone(), Token::Id(s.clone()));
+                        words.insert(s.clone(), Token::Id);
                     },
                 }
             },
             _ => {
                 result.push(MetaToken { 
                     content: c.to_string(),
-                    token: Token::Id(c.to_string()),
+                    token: Token::Id,
                     line_no,
                 });
                 it.next();
@@ -304,32 +304,32 @@ fn correct_token_types()    {
                 },
                 MetaToken {
                     content: "_".to_string(),
-                    token: Token::Id("_".to_string()),
+                    token: Token::Id,
                     line_no: 1
                 },
                 MetaToken {
                     content: "while".to_string(),
-                    token: Token::While("while".to_string()),
+                    token: Token::While,
                     line_no: 1
                 },
                 MetaToken {
                     content: "!=".to_string(),
-                    token: Token::Ne("!=".to_string()),
+                    token: Token::Ne,
                     line_no: 1
                 },
                 MetaToken {
                     content: "&&".to_string(),
-                    token: Token::And("&&".to_string()),
+                    token: Token::And,
                     line_no: 1
                 },
                 MetaToken {
                     content: "=".to_string(),
-                    token: Token::Id("=".to_string()),
+                    token: Token::Id,
                     line_no: 1,
                 },
                 MetaToken {
                     content: "ok".to_string(),
-                    token: Token::Id("ok".to_string()),
+                    token: Token::Id,
                     line_no: 1,
                 },
                 MetaToken {
@@ -344,37 +344,37 @@ fn correct_token_types()    {
                 },
                 MetaToken {
                     content: "=".to_string(),
-                    token: Token::Id("=".to_string()),
+                    token: Token::Id,
                     line_no: 2,
                 },
                 MetaToken {
                     content: "_".to_string(),
-                    token: Token::Id("_".to_string()),
+                    token: Token::Id,
                     line_no: 2,
                 },
                 MetaToken {
                     content: "true".to_string(),
-                    token: Token::True("true".to_string()),
+                    token: Token::True,
                     line_no: 2,
                 },
                 MetaToken {
                     content: "false".to_string(),
-                    token: Token::False("false".to_string()),
+                    token: Token::False,
                     line_no: 2,
                 },
                 MetaToken {
                     content: "if".to_string(),
-                    token: Token::If("if".to_string()),
+                    token: Token::If,
                     line_no: 2,
                 },
                 MetaToken {
                     content: "else".to_string(),
-                    token: Token::Else("else".to_string()),
+                    token: Token::Else,
                     line_no: 2,
                 },
                 MetaToken {
                     content: "true1".to_string(),
-                    token: Token::Id("true1".to_string()),
+                    token: Token::Id,
                     line_no: 2,
                 },
             ];
