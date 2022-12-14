@@ -42,10 +42,6 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
 
 fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String, i: i32) -> Option<Token> {
     let c_opt = it.peek();
-    println!("\n\n---------------------------\nDurchlauf {}", i);
-    println!("content: {}",content);
-    println!("c_opt {:?}", c_opt);
-    println!("tree {:?}", prefix_tree);
     match c_opt {
         Some(c) => {
             let childTree = prefix_tree.get_child(c);
