@@ -40,6 +40,14 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
     }
 }
 
+fn lex_keyword_base_case(prefix_tree: &PrefixTree) -> Option<Token> {
+    match prefix_tree {
+        PrefixTree::Root(_) => None,
+        PrefixTree::Leaf(token) => Some(token.clone()),
+        PrefixTree::Node(token, _) => Some(token.clone()),
+    }
+}
+
 fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String, i: i32) -> Option<Token> {
     if let Some(c) = it.peek(){
         if let Some(child_tree) = prefix_tree.get_child(c) {
@@ -51,18 +59,10 @@ fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = c
                     }
                 }
             } else {
-                match prefix_tree {
-                    PrefixTree::Root(_) => None,
-                    PrefixTree::Leaf(token) => Some(token.clone()),
-                    PrefixTree::Node(token, _) => Some(token.clone()),
-                }
+                lex_keyword_base_case(prefix_tree)
             }
     } else  {
-        match prefix_tree {
-            PrefixTree::Leaf(t) => Some(t.clone()),
-            PrefixTree::Node(t, _) => Some(t.clone()),  
-            PrefixTree::Root(_) => None,
-        }
+        lex_keyword_base_case(prefix_tree)
     }
 }
 
