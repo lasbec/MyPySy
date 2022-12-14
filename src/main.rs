@@ -40,8 +40,12 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
     }
 }
 
-fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String) -> Option<Token> {
+fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String, i: i32) -> Option<Token> {
     let c_opt = it.peek();
+    println!("\n\n---------------------------\nDurchlauf {}", i);
+    println!("content: {}",content);
+    println!("c_opt {:?}", c_opt);
+    println!("tree {:?}", prefix_tree);
     match c_opt {
         Some(c) => {
             let childTree = prefix_tree.get_child(c);
@@ -50,21 +54,10 @@ fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = c
                     match prefix_tree {
                         PrefixTree::Root(_) => None,
                         PrefixTree::Leaf(token) => {
-                            match it.next() {
-                                None => panic!("ABC 0"),
-                                Some(_) => {
-                                    Some(token.clone())
-                                }
-                            }
-                            
+                            Some(token.clone())
                         },
                         PrefixTree::Node(token, _) => {
-                            match it.next() {
-                                None => panic!("ABC 1"),
-                                Some(_) => {
-                                    Some(token.clone())
-                                }
-                            }
+                            Some(token.clone())
                         }
                     }
                 },
@@ -73,14 +66,20 @@ fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = c
                         None => panic!("ABC 2"),
                         Some(c) => {
                             content.push(c);
-                            lex_keyword(child, it, content)
+                            lex_keyword(child, it, content, i+1)
                         }
                     }
                     
                 }
             }
         },
-        None => None
+        None => {
+            match prefix_tree {
+                PrefixTree::Leaf(t) => Some(t.clone()),
+                PrefixTree::Node(t, _) => Some(t.clone()),  
+                PrefixTree::Root(_) => None,
+            }
+        }
     }
 }
 
@@ -117,6 +116,7 @@ fn lex_special_sign(first_char:&char,first_token:Token, second_char:&char, secon
     }
 }
 
+#[derive(Debug)]
 enum PrefixTree {
     Root(HashMap::<char, PrefixTree>),
     Leaf(Token),
@@ -204,8 +204,8 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     let mut line_no = 1;
 
     while let Some(&c) = it.peek()  {
-        /*let mut content = String::new();
-        let token = lex_keyword(&prefixMap, &mut it, &mut content);
+        let mut content = String::new();
+        let token = lex_keyword(&prefixMap, &mut it, &mut content, 1);
         match token {
             None => {},
             Some(t) => {
@@ -215,7 +215,10 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
                     line_no
                 });
             }
-        }*/
+        }
+        println!("=============== c0 {}", c);
+        let c = if let Some(&new_c) = it.peek() {new_c}else{break;};
+        println!("=============== c1 {}", c);
         match c {
             ' ' | '\t' => {
                 it.next();
@@ -224,12 +227,14 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
                 line_no += 1;
                 it.next();
             },
+            /*
             '&' => lex_special_sign(&'&',Token::Id ,&'&',Token::And,&mut it, &mut result, line_no),
             '|' => lex_special_sign(&'|',Token::Id ,&'|',Token::Or,&mut it, &mut result, line_no),
             '=' => lex_special_sign(&'=',Token::Id ,&'=',Token::Eql,&mut it, &mut result, line_no),
             '!' => lex_special_sign(&'!',Token::Id,&'=',Token::Ne,&mut it, &mut result, line_no),
             '<' => lex_special_sign(&'<',Token::Lt,&'=',Token::Le,&mut it, &mut result, line_no),
             '>' => lex_special_sign(&'>',Token::Gt,&'=',Token::Ge,&mut it, &mut result, line_no),
+            */
             '0'..='9' =>    {
                 let mut n = c.to_string().parse::<f64>().expect("Character not a digit.");
 
@@ -327,7 +332,7 @@ fn correct_amount_of_tokens()   {
     }
 }
 #[test]
-fn map_token_types() {
+fn map_token() {
     let input = String::from("!= ");
     let result = lex(&input);
     match result {
@@ -337,6 +342,52 @@ fn map_token_types() {
                     content: "!=".to_string(),
                     token: Token::Ne,
                     line_no: 1
+            }];
+            assert_eq!(expected, r);
+        },
+        Err(_) => println!("Error getting the return value."),
+    }
+}
+
+#[test]
+fn and_token() {
+    let input = String::from("!= &&");
+    let result = lex(&input);
+    match result {
+        Ok(r) => {
+            let expected = vec![
+                MetaToken {
+                    content: "!=".to_string(),
+                    token: Token::Ne,
+                    line_no: 1
+                },
+                MetaToken {
+                    content: "&&".to_string(),
+                    token: Token::And,
+                    line_no: 1
+                }];
+            assert_eq!(expected, r);
+        },
+        Err(_) => println!("Error getting the return value."),
+    }
+}
+
+#[test]
+fn identifier_token_types() {
+    let input = String::from("!= hello4u");
+    let result = lex(&input);
+    match result {
+        Ok(r) => {
+            let expected = vec![
+                MetaToken {
+                    content: "!=".to_string(),
+                    token: Token::Ne,
+                    line_no: 1
+            },
+            MetaToken {
+                content: "hello4u".to_string(),
+                token: Token::Id,
+                line_no: 1
             }];
             assert_eq!(expected, r);
         },
