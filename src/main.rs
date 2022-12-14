@@ -1,4 +1,4 @@
-use std::collections::{HashMap, binary_heap::Iter};
+use std::collections::{ HashMap };
 
 fn main(){
     print!("Hello Lex");
@@ -79,39 +79,6 @@ fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = c
                 PrefixTree::Node(t, _) => Some(t.clone()),  
                 PrefixTree::Root(_) => None,
             }
-        }
-    }
-}
-
-fn lex_special_sign(first_char:&char,first_token:Token, second_char:&char, second_token:Token, it: &mut impl PeekableIterator<Item = char>, result: &mut Vec<MetaToken>, line_no:i32) {
-    it.next();
-    let ch = it.peek();
-    let mut content = first_char.to_string();
-    match ch {
-        Some(n) => {
-            if n == second_char{
-                content.push(second_char.clone());
-                result.push(MetaToken {
-                    content,
-                    token: second_token,
-                    line_no,
-        
-                });
-                it.next();
-            } else {
-                result.push(MetaToken {
-                content,
-                token: first_token,
-                line_no,
-            });
-            }
-        },
-        None => {
-            result.push(MetaToken {
-                content,
-                token: first_token,
-                line_no,
-            });
         }
     }
 }
@@ -216,9 +183,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
                 });
             }
         }
-        println!("=============== c0 {}", c);
         let c = if let Some(&new_c) = it.peek() {new_c}else{break;};
-        println!("=============== c1 {}", c);
         match c {
             ' ' | '\t' => {
                 it.next();
@@ -227,14 +192,6 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
                 line_no += 1;
                 it.next();
             },
-            /*
-            '&' => lex_special_sign(&'&',Token::Id ,&'&',Token::And,&mut it, &mut result, line_no),
-            '|' => lex_special_sign(&'|',Token::Id ,&'|',Token::Or,&mut it, &mut result, line_no),
-            '=' => lex_special_sign(&'=',Token::Id ,&'=',Token::Eql,&mut it, &mut result, line_no),
-            '!' => lex_special_sign(&'!',Token::Id,&'=',Token::Ne,&mut it, &mut result, line_no),
-            '<' => lex_special_sign(&'<',Token::Lt,&'=',Token::Le,&mut it, &mut result, line_no),
-            '>' => lex_special_sign(&'>',Token::Gt,&'=',Token::Ge,&mut it, &mut result, line_no),
-            */
             '0'..='9' =>    {
                 let mut n = c.to_string().parse::<f64>().expect("Character not a digit.");
 
