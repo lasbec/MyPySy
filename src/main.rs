@@ -41,40 +41,27 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
 }
 
 fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String, i: i32) -> Option<Token> {
-    let c_opt = it.peek();
-    match c_opt {
-        Some(c) => {
-            let childTree = prefix_tree.get_child(c);
-            match childTree {
-                None => {
-                    match prefix_tree {
-                        PrefixTree::Root(_) => None,
-                        PrefixTree::Leaf(token) => {
-                            Some(token.clone())
-                        },
-                        PrefixTree::Node(token, _) => {
-                            Some(token.clone())
-                        }
+    if let Some(c) = it.peek(){
+        if let Some(child_tree) = prefix_tree.get_child(c) {
+                match it.next() {
+                    None => panic!("ABC 2"),
+                    Some(c) => {
+                        content.push(c);
+                        lex_keyword(child_tree, it, content, i+1)
                     }
-                },
-                Some(child) => {
-                    match it.next() {
-                        None => panic!("ABC 2"),
-                        Some(c) => {
-                            content.push(c);
-                            lex_keyword(child, it, content, i+1)
-                        }
-                    }
-                    
+                }
+            } else {
+                match prefix_tree {
+                    PrefixTree::Root(_) => None,
+                    PrefixTree::Leaf(token) => Some(token.clone()),
+                    PrefixTree::Node(token, _) => Some(token.clone()),
                 }
             }
-        },
-        None => {
-            match prefix_tree {
-                PrefixTree::Leaf(t) => Some(t.clone()),
-                PrefixTree::Node(t, _) => Some(t.clone()),  
-                PrefixTree::Root(_) => None,
-            }
+    } else  {
+        match prefix_tree {
+            PrefixTree::Leaf(t) => Some(t.clone()),
+            PrefixTree::Node(t, _) => Some(t.clone()),  
+            PrefixTree::Root(_) => None,
         }
     }
 }
