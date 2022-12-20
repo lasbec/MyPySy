@@ -72,13 +72,31 @@ impl PrefixTree {
         return PrefixTree(None, HashMap::new());
     }
 
-    fn add_empty_leaf(&mut self, c:char) -> &mut PrefixTree {
+    fn set_token(&mut self, token: &Token) {
+        self.0 = Some(token.clone());
+    }
+
+    fn set_child(&mut self, c:&char)-> &mut PrefixTree {
+        match self.1.get(c) {
+            Some(_) => self.1.get_mut(c).unwrap(),
+            None => self.write_empty_leaf(c.clone()),
+        }
+    }
+
+    fn add_path(&mut self, path:&mut String, token:&Token) {
+        match path.pop() {
+            None => self.set_token(token),
+            Some(head) => self.set_child(&head).add_path(path, token),
+        }
+    }
+
+    fn write_empty_leaf(&mut self, c:char) -> &mut PrefixTree {
         let leaf = PrefixTree(None, HashMap::new());
         self.1.insert(c, leaf);
         self.get_mut_child(&c).expect("Just added leaf is not there.")
     }
 
-    fn add_leaf(&mut self, c:char ,token:Token) -> &mut PrefixTree {
+    fn write_leaf(&mut self, c:char ,token:Token) -> &mut PrefixTree {
         let leaf = PrefixTree(Some(token.clone()), HashMap::new());
         self.1.insert(c, leaf);
         self.get_mut_child(&c).expect("Just added leaf is not there.")
@@ -98,12 +116,12 @@ impl PrefixTree {
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     let mut result: Vec<MetaToken> = Vec::new();
     let mut prefixMap = PrefixTree::new();
-    prefixMap.add_leaf('&',Token::Id ).add_leaf('&',Token::And);
-    prefixMap.add_leaf('|',Token::Id ).add_leaf('|',Token::Or);
-    prefixMap.add_leaf('=',Token::Id ).add_leaf('=',Token::Eql);
-    prefixMap.add_leaf('!',Token::Id).add_leaf('=',Token::Ne);
-    prefixMap.add_leaf('<',Token::Lt).add_leaf('=',Token::Le);
-    prefixMap.add_leaf('>',Token::Gt).add_leaf('=',Token::Ge);
+    prefixMap.write_leaf('&',Token::Id).write_leaf('&',Token::And);
+    prefixMap.write_leaf('|',Token::Id).write_leaf('|',Token::Or);
+    prefixMap.write_leaf('=',Token::Id).write_leaf('=',Token::Eql);
+    prefixMap.write_leaf('!',Token::Id).write_leaf('=',Token::Ne);
+    prefixMap.write_leaf('<',Token::Lt).write_leaf('=',Token::Le);
+    prefixMap.write_leaf('>',Token::Gt).write_leaf('=',Token::Ge);
 
     let mut words = HashMap::from([
         ("true".to_string(),  Token::True),
