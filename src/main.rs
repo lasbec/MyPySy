@@ -124,7 +124,7 @@ impl PrefixTree {
 
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     let mut result: Vec<MetaToken> = Vec::new();
-    let prefix_map = PrefixTree::from(vec![
+    let special_signs = PrefixTree::from(vec![
         ("&", &Token::Id),
         ("&&", &Token::And),
         ("|", &Token::Id),
@@ -140,7 +140,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     ]);
 
 
-    let mut words = HashMap::from([
+    let mut key_words = HashMap::from([
         ("true".to_string(),  Token::True),
         ("false".to_string(), Token::False),
         ("if".to_string(),    Token::If),
@@ -154,7 +154,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
 
     while let Some(&c) = it.peek()  {
         let mut content = String::new();
-        let token = lex_keyword(&prefix_map, &mut it, &mut content);
+        let token = lex_keyword(&special_signs, &mut it, &mut content);
 
         if let Some(t) = token {
             result.push(MetaToken{
@@ -228,7 +228,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
                     }
                 }
                 println!("{}", s);
-                match words.get(&s)  {
+                match key_words.get(&s)  {
                     Some(t) => result.push(MetaToken {
                         content: s.clone(),
                         token: Token::clone(t),
@@ -240,7 +240,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
                             token:Token::Id,
                             line_no
                         });
-                        words.insert(s.clone(), Token::Id);
+                        key_words.insert(s.clone(), Token::Id);
                     },
                 }
             },
