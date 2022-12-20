@@ -42,7 +42,6 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
 
 fn lex_keyword_base_case(prefix_tree: &PrefixTree) -> Option<Token> {
     match prefix_tree {
-        PrefixTree::Root(_) => None,
         PrefixTree::Node(token, _) => token.clone(),
     }
 }
@@ -67,21 +66,17 @@ fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = c
 
 #[derive(Debug)]
 enum PrefixTree {
-    Root(HashMap::<char, PrefixTree>),
     Node(Option<Token>, HashMap::<char, PrefixTree>)
 }
 
 impl PrefixTree {
     fn new() -> PrefixTree {
-        return PrefixTree::Root(HashMap::new());
+        return PrefixTree::Node(None, HashMap::new());
     }
 
     fn add_leaf(&mut self, c:char ,token:Token) -> &mut PrefixTree {
         let leaf = PrefixTree::Node(Some(token.clone()), HashMap::new());
         match self {
-            PrefixTree::Root(map) => {
-                map.insert(c, leaf);
-            },
             PrefixTree::Node(token, map) => {
                 map.insert(c, leaf);
             }
@@ -95,9 +90,6 @@ impl PrefixTree {
     }
     fn get_child(&self,c:&char) -> Option<&PrefixTree> {
         match self {
-            PrefixTree::Root(map) => {
-                map.get(c)
-            },
             PrefixTree::Node(_, map) => {
                 map.get(c)
             }
@@ -106,9 +98,6 @@ impl PrefixTree {
 
     fn get_mut_child(&mut self,c:&char) -> Option<&mut PrefixTree> {
         match self {
-            PrefixTree::Root(map) => {
-                map.get_mut(c)
-            },
             PrefixTree::Node(_, map) => {
                 map.get_mut(c)
             }
