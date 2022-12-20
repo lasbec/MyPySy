@@ -83,10 +83,17 @@ impl PrefixTree {
         }
     }
 
-    fn add_path(&mut self, path:&mut String, token:&Token) {
-        match path.pop() {
-            None => self.set_token(token),
-            Some(head) => self.set_child(&head).add_path(path, token),
+    fn set_path(&mut self, path: &str, token:&Token) {
+        self.set_path_string(&mut path.to_string(), token)
+    }
+
+    fn set_path_string(&mut self, path: &mut String, token:&Token) {
+        if path.len() == 0 {
+            self.set_token(token);
+        } else {
+            let head = path.remove(0);
+            self.set_child(&head).set_path(path, token);
+
         }
     }
 
@@ -116,12 +123,25 @@ impl PrefixTree {
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     let mut result: Vec<MetaToken> = Vec::new();
     let mut prefixMap = PrefixTree::new();
-    prefixMap.write_leaf('&',Token::Id).write_leaf('&',Token::And);
-    prefixMap.write_leaf('|',Token::Id).write_leaf('|',Token::Or);
-    prefixMap.write_leaf('=',Token::Id).write_leaf('=',Token::Eql);
-    prefixMap.write_leaf('!',Token::Id).write_leaf('=',Token::Ne);
-    prefixMap.write_leaf('<',Token::Lt).write_leaf('=',Token::Le);
-    prefixMap.write_leaf('>',Token::Gt).write_leaf('=',Token::Ge);
+    prefixMap.set_path("&", &Token::Id);
+    prefixMap.set_path("&&", &Token::And);
+
+    prefixMap.set_path("|", &Token::Id);
+    prefixMap.set_path("||", &Token::Or);
+
+    prefixMap.set_path("=", &Token::Id);
+    prefixMap.set_path("==", &Token::Eql);
+
+
+    prefixMap.set_path("!", &Token::Id);
+    prefixMap.set_path("!=", &Token::Ne);
+
+    prefixMap.set_path("<", &Token::Lt);
+    prefixMap.set_path("<=", &Token::Le);
+
+    prefixMap.set_path(">", &Token::Gt);
+    prefixMap.set_path(">=", &Token::Ge);
+
 
     let mut words = HashMap::from([
         ("true".to_string(),  Token::True),
