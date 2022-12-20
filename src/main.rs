@@ -40,27 +40,21 @@ impl<I: std::iter::Iterator> PeekableIterator for std::iter::Peekable<I> {
     }
 }
 
-fn lex_keyword_base_case(prefix_tree: &PrefixTree) -> Option<Token> {
-    match prefix_tree {
-        PrefixTree(token, _) => token.clone(),
-    }
-}
-
-fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String, i: i32) -> Option<Token> {
+fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = char>, content: &mut String) -> Option<Token> {
     if let Some(c) = it.peek(){
         if let Some(child_tree) = prefix_tree.get_child(c) {
                 match it.next() {
                     None => panic!("ABC 2"),
                     Some(c) => {
                         content.push(c);
-                        lex_keyword(child_tree, it, content, i+1)
+                        lex_keyword(child_tree, it, content)
                     }
                 }
             } else {
-                lex_keyword_base_case(prefix_tree)
+                prefix_tree.0.clone()
             }
     } else  {
-        lex_keyword_base_case(prefix_tree)
+        prefix_tree.0.clone()
     }
 }
 
@@ -157,16 +151,14 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
 
     while let Some(&c) = it.peek()  {
         let mut content = String::new();
-        let token = lex_keyword(&prefixMap, &mut it, &mut content, 1);
-        match token {
-            None => {},
-            Some(t) => {
-                result.push(MetaToken{
-                    content,
-                    token: t,
-                    line_no
-                });
-            }
+        let token = lex_keyword(&prefixMap, &mut it, &mut content);
+
+        if let Some(t) = token {
+            result.push(MetaToken{
+                content,
+                token: t,
+                line_no
+            });
         }
         let c = if let Some(&new_c) = it.peek() {new_c}else{break;};
         match c {
