@@ -1,4 +1,4 @@
-use std::collections::{ HashMap };
+use std::{collections::{ HashMap }, f32::consts::E};
 
 fn main(){
     print!("Hello Lex");
@@ -120,6 +120,63 @@ impl PrefixTree {
     }
 }
 
+#[derive(Debug, PartialEq)]
+enum Either<A, B> {
+    Left(A),
+    Right(B),
+}
+
+enum CharState {
+    Accepted,
+    Rejected,
+}
+
+fn parseOrReject(
+    prefix_tree: &PrefixTree,
+    it: &mut impl PeekableIterator<Item = char>,
+    check_map: HashMap::<char, CharState>
+    ) -> Either<Token, String> {
+        
+    let mut content = String::new();
+    let next_char = it.next();
+    match next_char {
+        Some(c) => {
+            content.push(c);
+            match check_map.get(&c) {
+                Some(CharState::Accepted) => {
+                    match &prefix_tree.0 {
+                        Some(t) => { return Either::Left(t.clone());},
+                        None => { return Either::Right(content);},
+                    }
+                },
+                Some(CharState::Rejected) => { return Either::Right(content); },
+                None => {
+                    match prefix_tree.get_child(&c) {
+                        None => {return Either::Right(content)},
+                        Some(child_tree) => { return parseOrReject(&child_tree, it, check_map);},
+                    };
+                },
+            };
+        },
+        None => {
+            match &prefix_tree.0 {
+                Some(t) => { return Either::Left(t.clone());},
+                None => { return Either::Right(content);},
+            };
+        },
+    }
+}
+
+#[test]
+fn test_pp(){
+    let result = parseOrReject(
+        &PrefixTree::from(vec![("&&", &Token::And)]),
+        &mut "&&".chars().peekable(), 
+        HashMap::from([])
+    );
+    let expected:Either<Token, String> = Either::Left(Token::And);
+    assert_eq!(result, expected);
+}
 
 
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
