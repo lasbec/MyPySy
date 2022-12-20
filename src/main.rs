@@ -77,6 +77,14 @@ impl PrefixTree {
         }
     }
 
+    fn from(paths:Vec<(&str, &Token)>) -> Self {
+        let mut result = Self::new();
+        for (p, t) in paths {
+            result.set_path(p, t);
+        }
+        return result;
+    }
+
     fn set_path(&mut self, path: &str, token:&Token) {
         self.set_path_string(&mut path.to_string(), token)
     }
