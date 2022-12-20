@@ -44,7 +44,7 @@ fn lex_keyword_base_case(prefix_tree: &PrefixTree) -> Option<Token> {
     match prefix_tree {
         PrefixTree::Root(_) => None,
         PrefixTree::Leaf(token) => Some(token.clone()),
-        PrefixTree::Node(token, _) => Some(token.clone()),
+        PrefixTree::Node(token, _) => token.clone(),
     }
 }
 
@@ -70,7 +70,7 @@ fn lex_keyword(prefix_tree: &PrefixTree, it: &mut impl PeekableIterator<Item = c
 enum PrefixTree {
     Root(HashMap::<char, PrefixTree>),
     Leaf(Token),
-    Node(Token, HashMap::<char, PrefixTree>)
+    Node(Option<Token>, HashMap::<char, PrefixTree>)
 }
 
 impl PrefixTree {
@@ -87,7 +87,7 @@ impl PrefixTree {
             PrefixTree::Leaf(token) => {
                 let mut map = HashMap::new();
                 map.insert(c, leaf);
-                *self = PrefixTree::Node(token.clone(), map);
+                *self = PrefixTree::Node(Some(token.clone()), map);
             },
             PrefixTree::Node(token, map) => {
                 map.insert(c, leaf);
