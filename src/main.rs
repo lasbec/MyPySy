@@ -72,34 +72,24 @@ impl PrefixTree {
         return PrefixTree(None, HashMap::new());
     }
 
+    fn add_empty_leaf(&mut self, c:char) -> &mut PrefixTree {
+        let leaf = PrefixTree(None, HashMap::new());
+        self.1.insert(c, leaf);
+        self.get_mut_child(&c).expect("Just added leaf is not there.")
+    }
+
     fn add_leaf(&mut self, c:char ,token:Token) -> &mut PrefixTree {
         let leaf = PrefixTree(Some(token.clone()), HashMap::new());
-        match self {
-            PrefixTree(token, map) => {
-                map.insert(c, leaf);
-            }
-        }
-        let result =  self.get_mut_child(&c);
-        match result {
-            Some(newChild) => newChild,
-            None => panic!("ABc"),
-        }
-
+        self.1.insert(c, leaf);
+        self.get_mut_child(&c).expect("Just added leaf is not there.")
     }
+
     fn get_child(&self,c:&char) -> Option<&PrefixTree> {
-        match self {
-            PrefixTree(_, map) => {
-                map.get(c)
-            }
-        }
+        self.1.get(c)
     }
 
     fn get_mut_child(&mut self,c:&char) -> Option<&mut PrefixTree> {
-        match self {
-            PrefixTree(_, map) => {
-                map.get_mut(c)
-            }
-        }
+        self.1.get_mut(c)
     }
 }
 
