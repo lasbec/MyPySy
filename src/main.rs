@@ -124,25 +124,20 @@ impl PrefixTree {
 
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     let mut result: Vec<MetaToken> = Vec::new();
-    let mut prefix_map = PrefixTree::new();
-    prefix_map.set_path("&", &Token::Id);
-    prefix_map.set_path("&&", &Token::And);
-
-    prefix_map.set_path("|", &Token::Id);
-    prefix_map.set_path("||", &Token::Or);
-
-    prefix_map.set_path("=", &Token::Id);
-    prefix_map.set_path("==", &Token::Eql);
-
-
-    prefix_map.set_path("!", &Token::Id);
-    prefix_map.set_path("!=", &Token::Ne);
-
-    prefix_map.set_path("<", &Token::Lt);
-    prefix_map.set_path("<=", &Token::Le);
-
-    prefix_map.set_path(">", &Token::Gt);
-    prefix_map.set_path(">=", &Token::Ge);
+    let prefix_map = PrefixTree::from(vec![
+        ("&", &Token::Id),
+        ("&&", &Token::And),
+        ("|", &Token::Id),
+        ("||", &Token::Or),
+        ("=", &Token::Id),
+        ("==", &Token::Eql),
+        ("!", &Token::Id),
+        ("!=", &Token::Ne),
+        ("<", &Token::Lt),
+        ("<=", &Token::Le),
+        (">", &Token::Gt),
+        (">=", &Token::Ge),
+    ]);
 
 
     let mut words = HashMap::from([
