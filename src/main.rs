@@ -124,25 +124,25 @@ impl PrefixTree {
 
 pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
     let mut result: Vec<MetaToken> = Vec::new();
-    let mut prefixMap = PrefixTree::new();
-    prefixMap.set_path("&", &Token::Id);
-    prefixMap.set_path("&&", &Token::And);
+    let mut prefix_map = PrefixTree::new();
+    prefix_map.set_path("&", &Token::Id);
+    prefix_map.set_path("&&", &Token::And);
 
-    prefixMap.set_path("|", &Token::Id);
-    prefixMap.set_path("||", &Token::Or);
+    prefix_map.set_path("|", &Token::Id);
+    prefix_map.set_path("||", &Token::Or);
 
-    prefixMap.set_path("=", &Token::Id);
-    prefixMap.set_path("==", &Token::Eql);
+    prefix_map.set_path("=", &Token::Id);
+    prefix_map.set_path("==", &Token::Eql);
 
 
-    prefixMap.set_path("!", &Token::Id);
-    prefixMap.set_path("!=", &Token::Ne);
+    prefix_map.set_path("!", &Token::Id);
+    prefix_map.set_path("!=", &Token::Ne);
 
-    prefixMap.set_path("<", &Token::Lt);
-    prefixMap.set_path("<=", &Token::Le);
+    prefix_map.set_path("<", &Token::Lt);
+    prefix_map.set_path("<=", &Token::Le);
 
-    prefixMap.set_path(">", &Token::Gt);
-    prefixMap.set_path(">=", &Token::Ge);
+    prefix_map.set_path(">", &Token::Gt);
+    prefix_map.set_path(">=", &Token::Ge);
 
 
     let mut words = HashMap::from([
@@ -159,7 +159,7 @@ pub fn lex(input: &String) -> Result<Vec<MetaToken>, String> {
 
     while let Some(&c) = it.peek()  {
         let mut content = String::new();
-        let token = lex_keyword(&prefixMap, &mut it, &mut content);
+        let token = lex_keyword(&prefix_map, &mut it, &mut content);
 
         if let Some(t) = token {
             result.push(MetaToken{
